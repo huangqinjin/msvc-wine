@@ -672,6 +672,8 @@ def moveVCSDK(unpack, dest):
         "DIA SDK",
         # MSBuild is the standard VC build tool.
         "MSBuild",
+        # Common7 contains vsdevcmd.bat that setup development environment on Windows.
+        "Common7",
     ]
 
     for dir in components:
