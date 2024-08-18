@@ -606,6 +606,7 @@ def moveVCSDK(unpack, dest):
     # out from the unpack directory, allowing the rest of unpacked
     # files to be removed.
     mergeTrees(os.path.join(unpack, "VC"), os.path.join(dest, "VC"))
+    mergeTrees(os.path.join(unpack, "Common7"), os.path.join(dest, "Common7"))
     kitsPath = unpack
     # msiexec extracts to Windows Kits rather than Program Files\Windows Kits
     if sys.platform != "win32":
