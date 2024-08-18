@@ -670,7 +670,8 @@ def moveVCSDK(unpack, dest):
     # The DIA SDK isn't necessary for normal use, but can be used when e.g.
     # compiling LLVM.
     # MSBuild is the standard VC build tool.
-    for extraDir in "DIA SDK", "MSBuild":
+    # Common7 contains vsdevcmd.bat that setup development environment on Windows.
+    for extraDir in "DIA SDK", "MSBuild", "Common7":
         mergeTrees(os.path.join(unpack, extraDir), os.path.join(dest, extraDir))
 
 if __name__ == "__main__":
