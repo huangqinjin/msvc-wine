@@ -43,7 +43,7 @@ ln_s() {
 if [ -n "$VC_ZIP" ]; then
     unzip $VC_ZIP
 fi
-ln_s kits "Windows Kits"
+ln_s "Windows Kits" kits
 ln_s VC vc
 ln_s Tools vc/tools
 ln_s MSVC vc/tools/msvc
@@ -200,3 +200,57 @@ if [ -d "$DEST/bin/$host" ]; then
         fi
     fi
 fi
+
+# Work with vcpkg
+unset VSVER
+case $MSVCVER in
+    14.0*) VSVER=14.0 ;;
+    14.1*) VSVER=15.0 ;;
+    14.2*) VSVER=16.0 ;;
+    14.3*) VSVER=17.0 ;;
+    14.4*) VSVER=17.0 ;;
+esac
+
+if [ -z $VSVER ]; then
+    echo "Unknown MSVC version: $MSVCVER"
+    exit 0
+fi
+
+# https://github.com/microsoft/vcpkg-tool/blob/2023-04-07/src/vcpkg/visualstudio.cpp#L90-L131
+VSDIR="$DEST/Microsoft Visual Studio"
+VSWHEREDIR="$VSDIR/Installer"
+BATDIR="$VSDIR/VC/Auxiliary/Build"
+
+mkdir -p "$VSWHEREDIR"
+mkdir -p "$BATDIR"
+ln -sfn "$DEST/VC/Tools" "$VSDIR/VC/Tools"
+
+cd "$VSWHEREDIR"
+cat >vswhere <<EOF
+#!/bin/bash
+cat <<INSTANCES
+<instance>
+  <installationPath>$VSDIR</installationPath>
+  <installationVersion>$VSVER</installationVersion>
+</instance>
+INSTANCES
+EOF
+chmod +x vswhere
+ln -fs vswhere vswhere.exe
+
+# https://github.com/microsoft/vcpkg-tool/blob/2023-04-07/src/vcpkg/visualstudio.cpp#L206-L304
+cd "$BATDIR"
+rm -f *.bat
+cat >vcvarsall.bat <<EOF
+export PATH=$DEST/bin/x64:\$PATH
+export CC="$DEST/bin/x64/cl.exe"
+export CXX="$DEST/bin/x64/cl.exe"
+export RC="$DEST/bin/x64/rc.exe"
+EOF
+
+[ -d "$DEST/bin/x64" ]   && echo '. "$(dirname "${BASH_SOURCE:-$0}")/vcvarsall.bat" x64       "$@"' > vcvars64.bat
+# [ -d "$DEST/bin/x86" ]   && echo '. "$(dirname "${BASH_SOURCE:-$0}")/vcvarsall.bat" amd64_x86 "$@"' > vcvarsamd64_x86.bat
+# [ -d "$DEST/bin/arm" ]   && echo '. "$(dirname "${BASH_SOURCE:-$0}")/vcvarsall.bat" amd64_arm "$@"' > vcvarsamd64_arm.bat
+# [ -d "$DEST/bin/arm64" ] && echo '. "$(dirname "${BASH_SOURCE:-$0}")/vcvarsall.bat" x64_arm64 "$@"' > vcvarsamd64_arm64.bat
+
+printf '\nTo work with vcpkg (only support x64 target currently), run:\n  export PROGRAMFILES="%s"\n' "$DEST"

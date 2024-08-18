@@ -1,0 +1,143 @@
+#!/bin/bash
+
+# This is a bash implementation of https://gitlab.kitware.com/cmake/cmake/-/blob/v3.26.1/Source/cmcldeps.cxx
+
+# This script must be put next to the cmake executable, see
+# https://gitlab.kitware.com/cmake/cmake/-/blob/v3.26.1/Source/cmSystemTools.cxx#L2611-2615.
+
+# There is a loophole invoking "cmcldeps LANG": cmake doesn't check the emptiness of the path, see
+# https://gitlab.kitware.com/cmake/cmake/-/blob/v3.26.1/Source/cmNinjaTargetGenerator.cxx#L804-821.
+# So Ninja actually treats LANG as the executable in the case cmake doesn't find cmcldeps.
+# One can rename this script to LANG (or using symlink) and put it in PATH, if putting the script next to 
+# the cmake executable is not doable.
+
+
+usage() {
+    printf \
+"ninja: FATAL: $1\n\nusage:\n"\
+"cmcldeps "\
+"<language C, CXX or RC>  "\
+"<source file path>  "\
+"<output path for *.d file>  "\
+"<output path for *.obj file>  "\
+"<prefix of /showIncludes>  "\
+"<path to cl.exe>  "\
+"<path to tool (cl or rc)>  "\
+"<rest of command ...>\n"\
+    >&2
+    exit 1
+}
+
+outputDepFile() {
+    local dfile=$1   ; shift
+    local objfile=$1 ; shift
+
+    if [[ -z $dfile ]]; then
+        return
+    fi
+
+    mapfile -t incs < <(printf '%s\n' "$@" | sort -u)
+    
+    local cwd="$(pwd)/"
+    printf '%q \\\n' "$objfile:" "${incs[@]#$cwd}" >$dfile
+}
+
+process() {
+    local srcfilename=$1    ; shift
+    local dfile=$1          ; shift
+    local objfile=$1        ; shift
+    local prefix=$1         ; shift
+    local cmd=$1            ; shift
+    local dir=$1            ; shift
+    local quiet=${1:-false} ; shift
+
+    exec {fd}< <([[ -n $dir ]] && cd "$dir"; eval $cmd 2>&1)
+    local pid=$!
+    mapfile -t -u $fd
+    wait $pid
+    local exit_code=$?
+    exec {fd}<&-
+
+    # process the include directives and output everything else
+    local includes=()
+    local isFirstLine=true # cl prints always first the source filename
+    for inc in "${MAPFILE[@]}"; do
+        if [[ $inc =~ ^$prefix[[:blank:]]*(.*)$ ]]; then
+            includes+=("${BASH_REMATCH[1]}")
+        else
+            if ! $isFirstLine || [[ $inc != ${srcfilename}* ]]; then
+                if ! $quiet || [[ $exit_code -ne 0 ]]; then
+                    printf '%s\n' "$inc"
+                fi
+            else
+                isFirstLine=false
+            fi
+        fi
+    done
+
+    # don't update .d until/unless we succeed compilation
+    if [[ $exit_code -eq 0 ]]; then
+        outputDepFile "$dfile" "$objfile" "${includes[@]}"
+    fi
+
+    return $exit_code
+}
+
+
+lang=$(basename "$0")
+if [[ $lang == cmcldeps ]]; then
+    lang=$1;    shift
+fi
+
+srcfile=$1; shift
+dfile=$1;   shift
+objfile=$1; shift
+prefix=$1;  shift
+cl=$1;      shift
+binpath=$1; shift
+rest=("$@")
+
+if [[ -z $binpath ]]; then
+    usage "Couldn't parse arguments."
+fi
+
+# https://github.com/ninja-build/ninja/blob/v1.11.1/src/clparser.cc#L46
+if [[ -z $prefix ]]; then
+    prefix="Note: including file: "
+fi
+
+# needed to suppress filename output of msvc tools
+srcfilename=$(basename "$srcfile")
+
+if [[ $lang == C || $lang == CXX ]]; then
+
+    process "$srcfilename" "$dfile" "$objfile" "$prefix" "'$binpath' /nologo /showIncludes ${rest[*]@Q}"
+
+elif [[ $lang == RC ]]; then
+    # "misuse" cl.exe to get headers from .rc files
+
+    clrest=()
+    for a in "${rest[@]}"; do
+        case $a in
+            [-/]fo | *$objfile) ;;
+            *) clrest+=("$a") ;;
+        esac
+    done
+
+    # call cl in object dir so the .i is generated there
+    objdir=$(dirname "$objfile")
+
+    # extract dependencies with cl.exe
+    process "$srcfilename" "$dfile" "$objfile" "$prefix" "'$cl' /P /DRC_INVOKED /TC /nologo /showIncludes ${clrest[*]@Q}" "$objdir" true
+
+    exit_code=$?
+    if [[ $exit_code -ne 0 ]]; then
+        exit $exit_code
+    fi
+
+    # compile rc file with rc.exe
+    process "$srcfilename" "" "$objfile" "$prefix" "'$binpath' ${rest[*]@Q}" "" true
+
+else
+    usage "Invalid language specified."
+fi
