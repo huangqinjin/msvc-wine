@@ -201,6 +201,8 @@ if [ -d "$DEST/bin/$host" ]; then
     fi
 fi
 
+cp -r $ORIG/MSBuild $DEST
+
 for p in $ORIG/patches/*.patch; do
     if ! git --work-tree=. apply --quiet --reverse --check "$p"; then
         git --work-tree=. apply "$p"
