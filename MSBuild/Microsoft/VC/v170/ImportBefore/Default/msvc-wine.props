@@ -1,0 +1,7 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <WindowsSdkDir_10 Condition="'$(WindowsSdkDir_10)' == ''">$(VSInstallRoot)\Windows Kits\10\</WindowsSdkDir_10>
+    <UniversalCRTSdkDir_10 Condition="'$(UniversalCRTSdkDir_10)' == ''">$(WindowsSdkDir_10)\</UniversalCRTSdkDir_10>
+    <UCRTContentRoot Condition="'$(UCRTContentRoot)' == ''">$(UniversalCRTSdkDir_10)</UCRTContentRoot>
+  </PropertyGroup>
+</Project>
