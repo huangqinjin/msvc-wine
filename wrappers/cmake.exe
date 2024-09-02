@@ -1,0 +1,30 @@
+#!/bin/bash
+#
+# Copyright (c) 2024 Huang Qinjin
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+. $(dirname $0)/msvcenv.sh
+
+CMAKEDIR=$BASE_UNIX/Common7/IDE/CommonExtensions/Microsoft/CMake
+export PATH=$PATH:$CMAKEDIR/Ninja
+
+if [ -z "$CMAKE_GENERATOR" ]; then
+    export CMAKE_GENERATOR="Visual Studio 17 2022"
+    export CMAKE_GENERATOR_INSTANCE=$BASE,version=17.0.0.0
+    export CMAKE_GENERATOR_PLATFORM=$ARCH,version=$SDKVER
+    export CMAKE_WINDOWS_KITS_10_DIR=$SDKBASE
+fi
+
+export WINE_MSVC_RAW_STDOUT=1
+$(dirname $0)/wine-msvc.sh $CMAKEDIR/CMake/bin/cmake.exe "$@"

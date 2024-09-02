@@ -27,6 +27,8 @@ if not exist "%~1\" (
 
 pushd "%~1"
 
+xcopy "%~dp0MSBuild" "%~1\MSBuild" /Q /E /R /K /H /Y >NUL
+
 for /R "%~dp0patches" %%f in (*.patch) do (
     git --work-tree=. apply --quiet --reverse --check "%%f"
     if errorlevel 1 git --work-tree=. apply "%%f"
