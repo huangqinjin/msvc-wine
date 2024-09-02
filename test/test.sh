@@ -99,6 +99,7 @@ for arch in x86 x64 arm arm64; do
     EXEC "" BIN=$BIN ./test-mc.sh
     EXEC "" BIN=$BIN ./test-cmake.sh
     EXEC "" BIN=$BIN ./test-meson.sh
+    EXEC "" BIN=$BIN ./test-vcvars.sh
 
     # MSBuild requires .NET framework v4.x or Mono to run.
     # Wine will search for Wine Mono in the following places:
