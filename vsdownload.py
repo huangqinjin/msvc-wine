@@ -376,6 +376,8 @@ def getPackageKey(p):
 def aggregateDepends(packages, included, target, constraints, args):
     if target.lower() in args.ignore:
         return []
+    if ".ide" in target.lower():
+        return []
     p = findPackage(packages, target, constraints)
     if p == None:
         return []
