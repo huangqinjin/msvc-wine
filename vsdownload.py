@@ -654,7 +654,16 @@ def extractPackages(selected, cache, dest):
         else:
             print("Skipping unpacking of " + p["id"] + " of type " + type)
 
-def moveVCSDK(unpack, dest):
+def moveVCSDK(unpack, dest, args):
+    # Remove some tools not for host arch before moving components.
+    if args.only_host and args.host_arch is not None:
+        archs = ["x86", "x64", "arm", "arm64"]
+        archs.remove(args.host_arch)
+        # Windows SDK build tools, e.g. rc.exe, mt.exe.
+        for p in glob.glob(os.path.join(unpack, "Windows Kits", "10", "bin", "10.*")):
+            for a in archs:
+                shutil.rmtree(os.path.join(p, a), ignore_errors=True)
+
     # Move some components out from the unpack directory,
     # allowing the rest of unpacked files to be removed.
     components = [
@@ -768,7 +777,7 @@ if __name__ == "__main__":
             unpackWin10WDK(args.with_wdk_installers, unpack)
 
         if not args.only_unpack:
-            moveVCSDK(unpack, dest)
+            moveVCSDK(unpack, dest, args)
             if not args.keep_unpack:
                 shutil.rmtree(unpack)
     finally:
