@@ -31,8 +31,9 @@ set(ENV{CXX} cl.exe)
 set(ENV{PATH} "${BIN}:\$ENV{PATH}")
 EOF
 
-# Install dependencies.
+# Install dependencies with classic mode.
 EXEC "" vcpkg install sqlite3:$ARCH-windows --overlay-triplets=.
+EXEC "" file $VCPKG_ROOT/installed/$ARCH-windows/{,debug/}bin/sqlite3.{dll,pdb}
 
 # Create source files.
 cat >main.c <<EOF
@@ -55,6 +56,10 @@ target_link_libraries(hello PRIVATE unofficial::sqlite3::sqlite3)
 EOF
 
 CMAKE_ARGS=(
+    -S.
+    -G"Ninja Multi-Config"
+    -DCMAKE_C_COMPILER=${BIN}cl
+    -DCMAKE_CXX_COMPILER=${BIN}cl
     -DCMAKE_SYSTEM_NAME=Windows
     -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
     -DVCPKG_TARGET_TRIPLET=$ARCH-windows
@@ -78,13 +83,39 @@ case $OSTYPE in
         ) ;;
 esac
 
-EXEC "" CC=${BIN}cl CXX=${BIN}cl RC=${BIN}rc cmake -S. -G"Ninja Multi-Config" "${CMAKE_ARGS[@]}"
-EXEC "" cmake --build . --config Debug -- -v
-EXEC "" cmake --build . --config Release -- -v
+EXEC "" cmake -B a "${CMAKE_ARGS[@]}"
+EXEC "" cmake --build a --config Debug -- -v
+EXEC "" cmake --build a --config Release -- -v
 
 if command -v pwsh &>/dev/null; then
-    EXEC "" file Debug/sqlite3.dll
-    EXEC "" file Release/sqlite3.dll
+    EXEC "" file a/{Debug,Release}/sqlite3.dll
+fi
+
+
+# Create project manifest file and configuration file.
+cat >vcpkg.json <<EOF
+{
+  "name": "hello",
+  "version-semver": "1.0.0",
+  "dependencies": [ "sqlite3" ]
+}
+EOF
+
+cat >vcpkg-configuration.json <<EOF
+{
+  "overlay-triplets": [ "." ]
+}
+EOF
+
+# Install dependencies with manifest mode.
+EXEC "" cmake -B b "${CMAKE_ARGS[@]}"
+EXEC "" file b/vcpkg_installed/$ARCH-windows/{,debug/}bin/sqlite3.{dll,pdb}
+
+EXEC "" cmake --build b --config Debug -- -v
+EXEC "" cmake --build b --config Release -- -v
+
+if command -v pwsh &>/dev/null; then
+    EXEC "" file b/{Debug,Release}/sqlite3.dll
 fi
 
 
