@@ -1,0 +1,12 @@
+diff --git a/Common7/Tools/vsdevcmd/core/vsdevcmd_start.bat b/Common7/Tools/vsdevcmd/core/vsdevcmd_start.bat
+--- a/Common7/Tools/vsdevcmd/core/vsdevcmd_start.bat
++++ b/Common7/Tools/vsdevcmd/core/vsdevcmd_start.bat
+@@ -8,6 +8,8 @@ call "%~dp0parse_cmd.bat" %*
+ if "%ERRORLEVEL%" NEQ "0" set /A __vscmd_vsdevcmd_errcount=__vscmd_vsdevcmd_errcount+1
+ 
+ @REM Save the current directory, if -startdir=none was specified by the user.
++@REM https://bugs.winehq.org/show_bug.cgi?id=57137
++if "%VSCMD_START_DIR%%VSCMD_ARG_STARTDIR%"=="" set VSCMD_ARG_STARTDIR=none
+ if /I "%VSCMD_ARG_STARTDIR%" == "none" set "__VSCMD_CURRENT_DIR=%CD%"
+ 
+ if "%VSCMD_DEBUG%" GEQ "2" (

@@ -1,0 +1,55 @@
+diff --git a/Common7/Tools/vsdevcmd/core/winsdk.bat b/Common7/Tools/vsdevcmd/core/winsdk.bat
+--- a/Common7/Tools/vsdevcmd/core/winsdk.bat
++++ b/Common7/Tools/vsdevcmd/core/winsdk.bat
+@@ -64,6 +64,8 @@ exit /B 0
+ 
+ if "%VSCMD_DEBUG%" GEQ "3" goto :GetWin10SdkDirVerbose
+ 
++call :GetWin10SdkDirHelper > nul 2>&1
++if errorlevel 1 ^
+ call :GetWin10SdkDirHelper HKLM\SOFTWARE\Wow6432Node > nul 2>&1
+ if errorlevel 1 call :GetWin10SdkDirHelper HKCU\SOFTWARE\Wow6432Node > nul 2>&1
+ if errorlevel 1 call :GetWin10SdkDirHelper HKLM\SOFTWARE > nul 2>&1
+@@ -73,6 +75,8 @@ exit /B 0
+ 
+ :GetWin10SdkDirVerbose
+ 
++call :GetWin10SdkDirHelper
++if errorlevel 1 ^
+ call :GetWin10SdkDirHelper HKLM\SOFTWARE\Wow6432Node
+ if errorlevel 1 call :GetWin10SdkDirHelper HKCU\SOFTWARE\Wow6432Node
+ if errorlevel 1 call :GetWin10SdkDirHelper HKLM\SOFTWARE
+@@ -84,6 +88,7 @@ exit /B 0
+ :GetWin10SdkDirHelper
+ 
+ @REM Get Windows 10 SDK installed folder
++if "%1"=="" (SET WindowsSdkDir=%VSINSTALLDIR%Windows Kits\10\) else ^
+ for /F "tokens=1,2*" %%i in ('reg query "%1\Microsoft\Microsoft SDKs\Windows\v10.0" /v "InstallationFolder"') DO (
+     if "%%i"=="InstallationFolder" (
+         SET WindowsSdkDir=%%~k
+@@ -231,6 +236,8 @@ set UniversalCRTSdkDir=
+ 
+ if "%VSCMD_DEBUG%" GEQ "3" goto :GetUniversalCRTSdkDirVerbose
+ 
++call :GetUniversalCRTSdkDirHelper > nul 2>&1
++if errorlevel 1 ^
+ call :GetUniversalCRTSdkDirHelper HKLM\SOFTWARE\Wow6432Node > nul 2>&1
+ if errorlevel 1 call :GetUniversalCRTSdkDirHelper HKCU\SOFTWARE\Wow6432Node > nul 2>&1
+ if errorlevel 1 call :GetUniversalCRTSdkDirHelper HKLM\SOFTWARE > nul 2>&1
+@@ -240,6 +247,8 @@ exit /B 0
+ 
+ :GetUniversalCRTSdkDirVerbose
+ 
++call :GetUniversalCRTSdkDirHelper
++if errorlevel 1 ^
+ call :GetUniversalCRTSdkDirHelper HKLM\SOFTWARE\Wow6432Node
+ if errorlevel 1 call :GetUniversalCRTSdkDirHelper HKCU\SOFTWARE\Wow6432Node
+ if errorlevel 1 call :GetUniversalCRTSdkDirHelper HKLM\SOFTWARE
+@@ -248,6 +257,7 @@ if errorlevel 1 exit /B 1
+ exit /B 0
+ 
+ :GetUniversalCRTSdkDirHelper
++if "%1"=="" (SET UniversalCRTSdkDir=%VSINSTALLDIR%Windows Kits\10\) else ^
+ for /F "tokens=1,2*" %%i in ('reg query "%1\Microsoft\Windows Kits\Installed Roots" /v "KitsRoot10"') DO (
+     if "%%i"=="KitsRoot10" (
+         SET UniversalCRTSdkDir=%%k

@@ -1,0 +1,11 @@
+diff --git a/Common7/Tools/VsDevCmd.bat b/Common7/Tools/VsDevCmd.bat
+--- a/Common7/Tools/VsDevCmd.bat
++++ b/Common7/Tools/VsDevCmd.bat
+@@ -247,6 +247,7 @@ exit /B 0
+ :end
+ 
+ @REM Send Telemetry if user's VS is opted-in
++SET VSCMD_SKIP_SENDTELEMETRY=1
+ if "%VSCMD_SKIP_SENDTELEMETRY%"=="" (
+     if "%VSCMD_DEBUG%" NEQ "" (
+         @echo [DEBUG:%~nx0] Sending telemetry
