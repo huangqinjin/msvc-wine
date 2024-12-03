@@ -1,0 +1,12 @@
+diff --git a/MSBuild/Microsoft/VC/v170/Microsoft.Cpp.WindowsSDK.props b/MSBuild/Microsoft/VC/v170/Microsoft.Cpp.WindowsSDK.props
+--- a/MSBuild/Microsoft/VC/v170/Microsoft.Cpp.WindowsSDK.props
++++ b/MSBuild/Microsoft/VC/v170/Microsoft.Cpp.WindowsSDK.props
+@@ -119,7 +119,7 @@ Copyright (C) Microsoft Corporation. All rights reserved.
+     <SDKVersion Condition="'$(SDKVersion)' == ''">10.0</SDKVersion>
+     <SDKDisplayName Condition="'$(SDKDisplayName)' == ''">Windows 10</SDKDisplayName>
+ 
+-    <_LatestWindowsTargetPlatformVersion>$([Microsoft.Build.Utilities.ToolLocationHelper]::GetLatestSDKTargetPlatformVersion($(SDKIdentifier), $(SDKVersion)))</_LatestWindowsTargetPlatformVersion>
++    <_LatestWindowsTargetPlatformVersion>$([Microsoft.Build.Utilities.ToolLocationHelper]::GetLatestSDKTargetPlatformVersion($(SDKIdentifier), $(SDKVersion), $(VSInstallRoot.Split(';')))</_LatestWindowsTargetPlatformVersion>
+     <WindowsTargetPlatformVersion Condition="'$(WindowsTargetPlatformVersion)' == '' and '$(_LatestWindowsTargetPlatformVersion)' != ''">10.0</WindowsTargetPlatformVersion>
+   </PropertyGroup>
+ 
