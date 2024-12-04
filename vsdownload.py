@@ -87,6 +87,7 @@ def getArgsParser():
     parser.add_argument("--with-atl", action=OptionalBoolean, help="Include ATL")
     parser.add_argument("--with-dia", action=OptionalBoolean, help="Include DIA SDK")
     parser.add_argument("--with-msbuild", action=OptionalBoolean, help="Include MSBuild")
+    parser.add_argument("--with-cmake", action=OptionalBoolean, help="Include CMake")
     parser.add_argument("--with-comntools", action=OptionalBoolean, help="Include Common7/Tools")
     parser.add_argument("--with-wdk-installers", metavar="dir", help="Install Windows Driver Kit using the provided MSI installers")
     parser.add_argument("--host-arch", metavar="arch", choices=["x86", "x64", "arm64"], help="Specify the host architecture of packages to install")
@@ -303,6 +304,11 @@ def setPackageSelection(args, packages):
         args.package.extend([
             "Microsoft.Build",
             "Microsoft.Build.Dependencies",
+        ])
+
+    if args.with_cmake:
+        args.package.extend([
+            "Microsoft.VisualStudio.VC.CMake",
         ])
 
     if args.with_comntools:
@@ -827,6 +833,7 @@ def moveVCSDK(unpack, dest):
         "DIA SDK",
         # MSBuild is the standard VC build tool.
         "MSBuild",
+        os.path.join("Common7", "IDE", "CommonExtensions", "Microsoft", "CMake"),
         os.path.join("Common7", "Tools"),
     ]
     for dir in filter(None, components):
