@@ -93,6 +93,7 @@ def getArgsParser():
     parser.add_argument("--with-dia", action=OptionalBoolean, help="Include DIA SDK (default)")
     parser.add_argument("--with-msbuild", action=OptionalBoolean, help="Include MSBuild (default)")
     parser.add_argument("--with-devcmd", action=OptionalBoolean, help="Include Visual Studio Developer Command Prompt (default)")
+    parser.add_argument("--with-cmake", action=OptionalBoolean, help="Include CMake")
     parser.add_argument("--with-wdk-installers", metavar="dir", help="Install Windows Driver Kit using the provided MSI installers")
     parser.add_argument("--host-arch", metavar="arch", choices=["x86", "x64", "arm64"], help="Specify the host architecture of packages to install")
     parser.add_argument("--only-host", default=True, action=OptionalBoolean, help="Only download packages that match host arch")
@@ -318,6 +319,7 @@ def setPackageSelection(args, packages):
     appendPackageSelection(args, args.with_msbuild, "Microsoft.Build.Dependencies")
     appendPackageSelection(args, args.with_devcmd, "Microsoft.VisualStudio.VC.vcvars")
     appendPackageSelection(args, args.with_devcmd, "Microsoft.VisualStudio.PackageGroup.VsDevCmd")
+    appendPackageSelection(args, args.with_cmake, "Microsoft.VisualStudio.VC.CMake")
 
     if args.with_wdk_installers is not None:
         args.package.append("Component.Microsoft.Windows.DriverKit.BuildTools")
@@ -862,6 +864,8 @@ def moveVCSDK(unpack, dest):
         # Environment variable VS170COMNTOOLS points to this directory, and some
         # tools use it to locate VS installation root and MSVC toolchains.
         os.path.join("Common7", "Tools"),
+        # CMake and Ninja.
+        os.path.join("Common7", "IDE", "CommonExtensions", "Microsoft", "CMake"),
     ]
     for dir in filter(None, components):
         mergeTrees(os.path.join(unpack, dir), os.path.join(dest, dir))
