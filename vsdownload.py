@@ -90,6 +90,7 @@ def getArgsParser():
     parser.add_argument("--with-wdk-installers", metavar="dir", help="Install Windows Driver Kit using the provided MSI installers")
     parser.add_argument("--host-arch", metavar="arch", choices=["x86", "x64", "arm64"], help="Specify the host architecture of packages to install")
     parser.add_argument("--only-host", default=True, const=True, action="store_const", help="Only download packages that match host arch")
+    parser.add_argument("--skip-patch", action="store_true", help="Don't patch downloaded packages")
     return parser
 
 def setPackageSelectionMSVC16(args, packages, userversion, sdk, toolversion, defaultPackages):
@@ -707,6 +708,11 @@ def unpackWin10SDK(src, payloads, dest):
     # Note, this extracts some files into Program Files/..., and some
     # files directly in the root unpack directory. The files we need
     # are under Program Files/... though.
+    # On Windows, msiexec extracts files to the root unpack directory.
+    # To be consistent, symlink Program Files to root.
+    if sys.platform != "win32" and not os.access(os.path.join(dest, "Program Files"), os.F_OK):
+        os.symlink(".", os.path.join(dest, "Program Files"), target_is_directory=True)
+
     for payload in payloads:
         name = getPayloadName(payload)
         if name.endswith(".msi"):
@@ -782,23 +788,41 @@ def extractPackages(selected, cache, dest):
         else:
             print("Skipping unpacking of " + p["id"] + " of type " + type)
 
-def moveVCSDK(unpack, dest):
-    # Move the VC and Program Files\Windows Kits\10 directories
-    # out from the unpack directory, allowing the rest of unpacked
-    # files to be removed.
-    mergeTrees(os.path.join(unpack, "VC"), os.path.join(dest, "VC"))
-    kitsPath = unpack
-    # msiexec extracts to Windows Kits rather than Program Files\Windows Kits
-    if sys.platform != "win32":
-        kitsPath = os.path.join(kitsPath, "Program Files")
-    mergeTrees(os.path.join(kitsPath, "Windows Kits"), os.path.join(dest, "Windows Kits"))
+def patchPackages(dest):
+    patches = os.path.join(os.path.dirname(os.path.abspath(__file__)), "patches")
+    for p in glob.glob("**", root_dir=patches, recursive=True):
+        patch = os.path.join(patches, p)
+        if os.path.isdir(patch):
+            continue
+        f, op = os.path.splitext(p)
+        if op == ".patch":
+            if os.access(os.path.join(dest, f), os.F_OK):
+                if 0 != subprocess.call(["git", "--work-tree=.", "apply", "--quiet", "--reverse", "--check", patch], cwd=dest):
+                    print("Patching " + f)
+                    subprocess.check_call(["git", "--work-tree=.", "apply", patch], cwd=dest)
+        elif op == ".remove":
+            if os.access(os.path.join(dest, f), os.F_OK):
+                print("Removing " + f)
+                os.remove(os.path.join(dest, f))
+        else:
+            print("Copying " + p)
+            os.makedirs(os.path.dirname(os.path.join(dest, p)), exist_ok=True)
+            shutil.copyfile(patch, os.path.join(dest, p))
 
-    # Move other VC components directories:
-    # The DIA SDK isn't necessary for normal use, but can be used when e.g.
-    # compiling LLVM.
-    # MSBuild is the standard VC build tool.
-    for extraDir in "DIA SDK", "MSBuild":
-        mergeTrees(os.path.join(unpack, extraDir), os.path.join(dest, extraDir))
+def moveVCSDK(unpack, dest):
+    # Move some components out from the unpack directory,
+    # allowing the rest of unpacked files to be removed.
+    components = [
+        "VC",
+        "Windows Kits",
+        # The DIA SDK isn't necessary for normal use, but can be used when e.g.
+        # compiling LLVM.
+        "DIA SDK",
+        # MSBuild is the standard VC build tool.
+        "MSBuild",
+    ]
+    for dir in filter(None, components):
+        mergeTrees(os.path.join(unpack, dir), os.path.join(dest, dir))
 
 if __name__ == "__main__":
     parser = getArgsParser()
@@ -901,6 +925,8 @@ if __name__ == "__main__":
             moveVCSDK(unpack, dest)
             if not args.keep_unpack:
                 shutil.rmtree(unpack)
+            if not args.skip_patch:
+                patchPackages(dest)
     finally:
         if tempcache != None:
             shutil.rmtree(tempcache)
