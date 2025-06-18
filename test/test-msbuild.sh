@@ -28,4 +28,12 @@ for config in Debug Release; do
     done
 done
 
+CMAKEDIR=$(. "${BIN}msvcenv.sh" && echo $CMAKEDIR)
+if [ -d "$CMAKEDIR" ]; then
+    EXEC "" ${BIN}cmake.exe -S"$TESTS"
+    EXEC "" ${BIN}cmake.exe --build . --config Debug
+    EXEC "" ${BIN}cmake.exe --build . --config Release
+    EXEC "" ${BIN}cmake.exe --build . --config RelWithDebInfo
+fi
+
 EXIT
