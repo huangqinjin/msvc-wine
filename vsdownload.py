@@ -166,7 +166,7 @@ def setPackageSelection(args, packages):
             args.with_default = True
 
     if args.with_default is not None:
-        for component in ["workload", "msvc", "asan", "sdk", "atl", "dia", "msbuild", "devcmd"]:
+        for component in ["msvc", "asan", "sdk", "atl", "dia", "msbuild", "devcmd"]:
             if getattr(args, "with_" + component) is None:
                 setattr(args, "with_" + component, args.with_default)
 
