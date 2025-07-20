@@ -172,7 +172,7 @@ def setPackageSelection(args, packages):
             args.with_default = True
 
     if args.with_default is not None:
-        for component in ["workload", "msvc", "asan", "sdk", "atl", "dia", "msbuild", "devcmd"]:
+        for component in ["msvc", "asan", "sdk", "atl", "dia", "msbuild", "devcmd"]:
             if getattr(args, "with_" + component) is None:
                 setattr(args, "with_" + component, args.with_default)
 
@@ -183,8 +183,6 @@ def setPackageSelection(args, packages):
     # fill in data in defaultPackages and defaultIgnores.
     defaultPackages, args.package = args.package, []
     defaultIgnores, args.ignore = args.ignore, []
-
-    appendPackageSelection(args, args.with_workload, "Microsoft.VisualStudio.Workload.VCTools")
 
     if "x86" in args.architecture or "x64" in args.architecture:
         appendPackageSelection(args, args.with_msvc, "Microsoft.VisualStudio.Component.VC.Tools.x86.x64")
@@ -352,6 +350,7 @@ def setPackageSelection(args, packages):
     appendPackageSelection(args, args.with_msbuild, "Microsoft.Build.Dependencies")
     appendPackageSelection(args, args.with_devcmd, "Microsoft.VisualStudio.VC.vcvars")
     appendPackageSelection(args, args.with_devcmd, "Microsoft.VisualStudio.PackageGroup.VsDevCmd")
+    appendPackageSelection(args, args.with_workload, "Microsoft.VisualStudio.Workload.VCTools")
 
     if args.with_wdk_installers is not None:
         args.package.append("Component.Microsoft.Windows.DriverKit.BuildTools")
