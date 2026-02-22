@@ -756,6 +756,8 @@ def unpackWin10WDK(src, dest):
         wdkVersion = buildDir.split("/")[-2];
         print("Merging WDK 'Build' and 'build' directories into version", wdkVersion);
         mergeTrees(brokenBuildDir, buildDir)
+        os.rename(f"{buildDir}/bin/Microsoft.DriverKit.Build.Tasks.17.0.dll", f"{buildDir}/bin/Microsoft.DriverKit.Build.Tasks.18.0.dll")
+        os.rename(f"{buildDir}/bin/Microsoft.DriverKit.Build.Tasks.PackageVerifier.17.0.dll", f"{buildDir}/bin/Microsoft.DriverKit.Build.Tasks.PackageVerifier.18.0.dll")
     shutil.rmtree(brokenBuildDir)
 
     # Move the WDK .props files into a versioned directory.
