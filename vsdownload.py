@@ -119,6 +119,11 @@ def setPackageSelectionMSVC16(args, packages, userversion, sdk, toolversion, def
             appendPackageSelection(args, args.with_msvc, "Microsoft.VisualStudio.Component.VC." + toolversion + ".ARM64")
             appendPackageSelection(args, args.with_atl, "Microsoft.VisualStudio.Component.VC." + toolversion + ".ATL.ARM64")
 
+        if args.with_msvc:
+            # VC/Auxiliary/Build/v145/Microsoft.VCToolsVersion.VC.VERSION.props
+            # VC/Auxiliary/Build/v145/Microsoft.VCToolsVersion.VC.VERSION.txt
+            args.package.append("Microsoft.VC."  + toolversion + ".Tools.Core.x86")
+
         if args.sdk_version == None:
             args.sdk_version = sdk
     else:
@@ -275,6 +280,23 @@ def setPackageSelection(args, packages):
     else:
         print("Unsupported MSVC toolchain version " + args.msvc_version)
         sys.exit(1)
+
+    if args.with_msvc:
+        # VC/Auxiliary/Build/vcvarsall.bat
+        # VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.props
+        # VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt
+        # VC/Auxiliary/Build/v145/Microsoft.VCToolsVersion.VC.VERSION.props
+        # VC/Auxiliary/Build/v145/Microsoft.VCToolsVersion.VC.VERSION.txt
+        args.package.append("Microsoft.VisualCpp.Tools.Core")
+
+        # VC/Auxiliary/Build/Microsoft.VCRedistVersion.default.props
+        # VC/Auxiliary/Build/Microsoft.VCRedistVersion.default.txt
+        # VC/Auxiliary/Build/Microsoft.VCRedistVersion.v145.default.props
+        args.package.append("Microsoft.VisualCpp.Servicing.Redist")
+
+        if args.major == 18:
+            # VC/Auxiliary/Build/Microsoft.VCToolsVersion.v145.default.props
+            args.package.append("Microsoft.VC.Tools.Redirection.v145")
 
     if args.with_sdk is None:
         pass
