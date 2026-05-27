@@ -5,7 +5,7 @@ on:
 
 env:
   # From https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-3-install-wdk
-  WDK_INSTALLER_URL: "https://go.microsoft.com/fwlink/?linkid=2307500"
+  WDK_INSTALLER_URL: "https://go.microsoft.com/fwlink/?LinkId=2362091"
 
 jobs:
   test-msvc-wine-linux:
