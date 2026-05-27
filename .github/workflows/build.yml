@@ -28,7 +28,7 @@ jobs:
         run: |
           WDK_INSTALLERS=$(./wdk-download.sh --cache /var/tmp/msvc-wine "$WDK_INSTALLER_URL")
           echo Downloaded WDK installers to $WDK_INSTALLERS
-          ./vsdownload.py --accept-license --dest $(pwd)/msvc --cache /var/tmp/msvc-wine --with-wdk-installers "$WDK_INSTALLERS"
+          ./vsdownload.py --accept-license --dest $(pwd)/msvc --cache /var/tmp/msvc-wine --with-wdk-installers "$WDK_INSTALLERS" --sdk-version 10.0.28000
           ./install.sh $(pwd)/msvc
       - name: Test using the installed tools
         run: |
