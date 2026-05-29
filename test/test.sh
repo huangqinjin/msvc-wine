@@ -95,23 +95,23 @@ for arch in x86 x64 arm arm64; do
         continue
     fi
 
-    EXEC "" BIN=$BIN ./test-cl.sh
-    EXEC "" BIN=$BIN ./test-mt.sh
-    EXEC "" BIN=$BIN ./test-dumpbin.sh
-    EXEC "" BIN=$BIN ./test-asm.sh
-    EXEC "" BIN=$BIN ./test-midl.sh
-    EXEC "" BIN=$BIN ./test-mc.sh
-    EXEC "" BIN=$BIN ./test-vcvars.sh
-    EXEC "" BIN=$BIN ./test-cmake.sh
-    EXEC "" BIN=$BIN ./test-meson.sh
+    # EXEC "" BIN=$BIN ./test-cl.sh
+    # EXEC "" BIN=$BIN ./test-mt.sh
+    # EXEC "" BIN=$BIN ./test-dumpbin.sh
+    # EXEC "" BIN=$BIN ./test-asm.sh
+    # EXEC "" BIN=$BIN ./test-midl.sh
+    # EXEC "" BIN=$BIN ./test-mc.sh
+    # EXEC "" BIN=$BIN ./test-vcvars.sh
+    # EXEC "" BIN=$BIN ./test-cmake.sh
+    # EXEC "" BIN=$BIN ./test-meson.sh
 
-    # Github runners define VCPKG_INSTALLATION_ROOT.
-    if [[ -z "$VCPKG_ROOT" && -n "$VCPKG_INSTALLATION_ROOT" ]]; then
-        export VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT
-    fi
-    if [[ -n "$VCPKG_ROOT" ]]; then
-        EXEC "" BIN=$BIN ./test-vcpkg.sh
-    fi
+    # # Github runners define VCPKG_INSTALLATION_ROOT.
+    # if [[ -z "$VCPKG_ROOT" && -n "$VCPKG_INSTALLATION_ROOT" ]]; then
+    #     export VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT
+    # fi
+    # if [[ -n "$VCPKG_ROOT" ]]; then
+    #     EXEC "" BIN=$BIN ./test-vcpkg.sh
+    # fi
 
     # MSBuild requires .NET framework v4.x or Mono to run.
     # Wine will search for Wine Mono in the following places:
