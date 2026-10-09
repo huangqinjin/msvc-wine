@@ -7,12 +7,14 @@ if (WIN32)
 endif()
 add_executable(hello ${hello_SOURCES})
 
-if(23 IN_LIST CMAKE_CXX_COMPILER_IMPORT_STD) # Since cmake 3.30
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+    if(NOT EXISTS CMAKE_CXX_STDLIB_MODULES_JSON)
+        message(FATAL_ERROR "C++ standard library manifest json file doesn't exist")
+    endif()
     add_executable(hello-cxx23 hello.cpp)
     target_compile_features(hello-cxx23 PUBLIC cxx_std_23)
     set_target_properties(hello-cxx23 PROPERTIES
         CXX_SCAN_FOR_MODULES ON
-        CXX_MODULE_STD ON
     )
 endif()
 
