@@ -15,6 +15,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import argparse
+import csv
 import functools
 import glob
 import hashlib
@@ -29,8 +30,12 @@ import subprocess
 import sys
 import tempfile
 import urllib.request
-import xml.etree.ElementTree as ET
 import zipfile
+
+try:
+    from lxml import etree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET
 
 def getArgsParser():
     class OptionalBoolean(argparse.Action):
@@ -965,6 +970,84 @@ def patchPackages(dest):
             os.makedirs(os.path.dirname(os.path.join(dest, p)), exist_ok=True)
             shutil.copyfile(patch, os.path.join(dest, p))
 
+def mergeSharedAssemblies(root, config, app, overwrite):
+    """
+    This reproduces what `VSFinalizer.exe` does through its
+    `UpdateExeConfigFinalizerTask` during a Visual Studio install/repair:
+
+    <root>\\Common7\\IDE\\VSFinalizer.exe -Operation Repair -InstallationPath <root> -SKU BuildTools
+        -GroupConfigs <config>,<root>\\SharedAssemblies\\Configs\\<config>.csv
+        -UsingGroupConfigs <config>,<app>.config.template,<overwrite>
+        -Log <root>\\merge-shared-assemblies.log
+    """
+    if os.path.isfile(app + ".config"):
+        return
+    if not os.path.isfile(app + ".config.template"):
+        return
+    if not os.path.isfile(os.path.join(root, "SharedAssemblies", "Configs", config + ".csv")):
+        return
+
+    ns = "{urn:schemas-microsoft-com:asm.v1}"
+    configuration = ET.parse(app + ".config.template")
+
+    assemblyBinding = configuration.getroot()
+    for tag in ["runtime", f"{ns}assemblyBinding"]:
+        child = assemblyBinding.find(tag)
+        if child is None:
+            child = ET.SubElement(assemblyBinding, tag)
+        assemblyBinding = child
+
+    deps = {}
+    for dependentAssembly in configuration.findall(f"./runtime/{ns}assemblyBinding/{ns}dependentAssembly"):
+        assemblyIdentity = dependentAssembly.find(f"{ns}assemblyIdentity")
+        if assemblyIdentity is not None:
+            deps[assemblyIdentity.get("name")] = dependentAssembly
+
+    with open(os.path.join(root, "SharedAssemblies", "Configs", config + ".csv"), newline="") as file, \
+         open(os.path.join(root, f"merge-shared-assemblies-{os.path.relpath(app, root).replace(os.path.sep, '-')}.log"), "w") as log:
+        for row in csv.DictReader(file):
+            dependentAssembly = deps.get(row["name"])
+            if dependentAssembly is None:
+                dependentAssembly = ET.SubElement(assemblyBinding, f"{ns}dependentAssembly")
+            elif not overwrite:
+                return
+            else:
+                dependentAssembly.clear()
+
+            ET.SubElement(dependentAssembly, f"{ns}assemblyIdentity", {
+                "name": row["name"],
+                "culture": row["culture"],
+                "publicKeyToken": row["publickeytoken"],
+            })
+            ET.SubElement(dependentAssembly, f"{ns}bindingRedirect", {
+                "oldVersion": row["oldVersion"] + "-" + row["newVersion"],
+                "newVersion": row["newVersion"],
+            })
+            ET.SubElement(dependentAssembly, f"{ns}codeBase", {
+                "version": row["version"],
+                "href": os.path.relpath(
+                    os.path.join(root, "SharedAssemblies", "Configs", row["href"].replace("\\", "/")),
+                    os.path.dirname(app)).replace("/", "\\")
+            })
+
+    if sys.platform != "win32" and ET.__name__ == "xml.etree.ElementTree":
+        # The builtin xml module moves all namespace declarations to the root element.
+        # This can trigger below error when invoking MSBuild on Wine:
+        #   MSBUILD : Configuration error MSB4136: Error reading the toolset information from the configuration file "System.Configuration (2)".
+        #   Unrecognized attribute 'ns0' in root element
+        #
+        # Post-process the generated xml file to move the namespace declaration down to a subelement.
+        # It is not guaranteed to work on complex configurations.
+        # Install lxml python package if the trick here doesn't work.
+        ET.register_namespace("x", ns[1:-1])
+        content = ET.tostring(configuration.getroot(), encoding="unicode", xml_declaration=True)
+        content = re.sub("<configuration[^>]*>", "<configuration>", content)
+        content = re.sub("<runtime>", f"<runtime xmlns:x=\"{ns[1:-1]}\">", content)
+        with open(app + ".config", "w", encoding="utf-8") as file:
+            file.write(content)
+    else:
+        configuration.write(app + ".config", encoding="utf-8", xml_declaration=True)
+
 def copyDependentAssemblies(app):
     if not os.path.isfile(app + ".config"):
         return
@@ -988,6 +1071,7 @@ def moveVCSDK(unpack, dest):
         "DIA SDK",
         # MSBuild is the standard VC build tool.
         "MSBuild",
+        "SharedAssemblies",
         # This directory contains batch scripts to setup Developer Command Prompt.
         # Environment variable VS170COMNTOOLS points to this directory, and some
         # tools use it to locate VS installation root and MSVC toolchains.
@@ -1108,9 +1192,14 @@ if __name__ == "__main__":
             if args.host_arch in ["x86", "arm64"]:
                 shutil.rmtree(os.path.join(unpack, "VC", "Tools", "Llvm", "x64"), ignore_errors=True)
 
+        mergeSharedAssemblies(unpack, "devenv", os.path.join(unpack, "MSBuild", "Current", "Bin", "MSBuild.exe"), True)
+        mergeSharedAssemblies(unpack, "devenv", os.path.join(unpack, "MSBuild", "Current", "Bin", "amd64", "MSBuild.exe"), True)
+        mergeSharedAssemblies(unpack, "devenv", os.path.join(unpack, "MSBuild", "Current", "Bin", "arm64", "MSBuild.exe"), True)
+
         if sys.platform != "win32":
             # Wine doesn't support dependentAssembly yet.
             # Manually copy dependencies to app directory.
+            copyDependentAssemblies(os.path.join(unpack, "MSBuild", "Current", "Bin", "MSBuild.exe"))
             copyDependentAssemblies(os.path.join(unpack, "MSBuild", "Current", "Bin", "amd64", "MSBuild.exe"))
             copyDependentAssemblies(os.path.join(unpack, "MSBuild", "Current", "Bin", "arm64", "MSBuild.exe"))
 
