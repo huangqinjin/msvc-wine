@@ -98,7 +98,7 @@ Remove-Item Alias:DIFF -Force
 
 function DIFF {
     $global:LASTEXITCODE = 1
-    $input | git --no-pager diff --no-index -R @args 
+    $input | git --no-pager diff --no-index -R @args
     $global:num_of_tests++
     if ($global:LASTEXITCODE -ne 0) {
         $global:num_of_fails++
@@ -136,6 +136,9 @@ if ($sourced) {
 }
 
 $VCToolsVersion = Get-Content -Path $([IO.Path]::Combine($Root, 'VC', 'Auxiliary', 'Build', 'Microsoft.VCToolsVersion.default.txt')) -Raw
+if ($env:VSDOWNLOAD_PREVIEW -eq "1") {
+    $VCToolsVersion = Get-Content -Path $([IO.Path]::Combine($Root, 'VC', 'Auxiliary', 'Build', 'Microsoft.VCToolsVersion.Preview.txt')) -Raw
+}
 
 if ($Arch) {
     $TargetArchs = @($Arch)

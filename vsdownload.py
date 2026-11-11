@@ -1083,6 +1083,8 @@ def moveVCSDK(unpack, dest):
 if __name__ == "__main__":
     parser = getArgsParser()
     args = parser.parse_args()
+    if args.preview is None and os.getenv("VSDOWNLOAD_PREVIEW") == "1":
+        args.preview = True
 
     socket.setdefaulttimeout(15)
 

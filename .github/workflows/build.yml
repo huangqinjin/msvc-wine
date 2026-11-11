@@ -6,6 +6,9 @@ on:
 env:
   # From https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-3-install-wdk
   WDK_INSTALLER_URL: "https://go.microsoft.com/fwlink/?LinkId=2362091"
+  VSDOWNLOAD_PREVIEW: 1
+  MSVCPreviewEnabled: true
+  VCVARS_USER_VERSION: Preview
 
 jobs:
   test-msvc-wine-linux:
@@ -195,6 +198,8 @@ jobs:
 
   test-msvc-wine-versions:
     runs-on: ubuntu-latest
+    env:
+      VSDOWNLOAD_PREVIEW: 0
     steps:
       - name: Install prerequisites
         run: |
