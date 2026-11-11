@@ -16,6 +16,10 @@
 
 . "${0%/*}/test.sh"
 
+if [[ $VSDOWNLOAD_PREVIEW == "1" ]]; then
+    EXIT
+fi
+
 vsdownload=$(realpath "${TESTS}../vsdownload.py")
 EXEC SaveManifest "$vsdownload" --save-manifest --print-version
 

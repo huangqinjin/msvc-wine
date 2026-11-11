@@ -136,6 +136,9 @@ if ($sourced) {
 }
 
 $VCToolsVersion = Get-Content -Path $([IO.Path]::Combine($Root, 'VC', 'Auxiliary', 'Build', 'Microsoft.VCToolsVersion.default.txt')) -Raw
+if ($env:VSDOWNLOAD_PREVIEW -eq "1") {
+    $VCToolsVersion = Get-Content -Path $([IO.Path]::Combine($Root, 'VC', 'Auxiliary', 'Build', 'Microsoft.VCToolsVersion.Preview.txt')) -Raw
+}
 
 if ($Arch) {
     $TargetArchs = @($Arch)
