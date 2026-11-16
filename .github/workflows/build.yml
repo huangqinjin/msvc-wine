@@ -23,6 +23,8 @@ jobs:
           # Check https://gitlab.winehq.org/wine/wine/-/wikis/Wine-Mono#versions before updating the WINE package!
           curl -s -L -O https://github.com/madewokherd/wine-mono/releases/download/wine-mono-8.1.0/wine-mono-8.1.0-x86.msi
           $WINE msiexec /i wine-mono-8.1.0-x86.msi
+          curl -o cmake.sh -fsSL https://github.com/Kitware/CMake/releases/download/v4.5.0/cmake-4.5.0-linux-x86_64.sh
+          chmod +x cmake.sh && sudo ./cmake.sh --skip-license --prefix=/usr/local
       - uses: actions/checkout@v6
       - name: Download MSVC
         run: |
@@ -51,6 +53,8 @@ jobs:
           sudo apt-get update && sudo apt-get install python3 msitools ca-certificates cmake ninja-build winbind meson
           WINE=$(command -v wine64 || command -v wine || false)
           $WINE wineboot
+          curl -o cmake.sh -fsSL https://github.com/Kitware/CMake/releases/download/v4.5.0/cmake-4.5.0-linux-aarch64.sh
+          chmod +x cmake.sh && sudo ./cmake.sh --skip-license --prefix=/usr/local
       - uses: actions/checkout@v6
       - name: Download MSVC
         run: |
@@ -77,6 +81,8 @@ jobs:
           sudo apt-get update && sudo apt-get install python3 msitools ca-certificates cmake ninja-build winbind meson
           WINE=$(command -v wine64 || command -v wine || false)
           $WINE wineboot
+          curl -o cmake.sh -fsSL https://github.com/Kitware/CMake/releases/download/v4.5.0/cmake-4.5.0-linux-aarch64.sh
+          chmod +x cmake.sh && sudo ./cmake.sh --skip-license --prefix=/usr/local
       - uses: actions/checkout@v6
       - name: Download MSVC
         run: |
@@ -117,11 +123,13 @@ jobs:
     # the /winsysroot parameter. LLD also provides the same parameter since
     # version 15. (For versions 13 and 14, this parameter can still be used
     # for linking, as long as linking is done via Clang.)
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Install prerequisites
         run: |
           sudo apt-get update && sudo apt-get install python3 msitools ca-certificates clang lld llvm cmake ninja-build
+          curl -o cmake.sh -fsSL https://github.com/Kitware/CMake/releases/download/v4.5.0/cmake-4.5.0-linux-x86_64.sh
+          chmod +x cmake.sh && sudo ./cmake.sh --skip-license --prefix=/usr/local
       - name: Set up clang-cl/lld-link symlinks
         run: |
           if [ ! -e /usr/bin/clang-cl ]; then
@@ -163,6 +171,8 @@ jobs:
       - name: Install prerequisites
         run: |
           choco upgrade --no-progress cmake
+          Invoke-WebRequest -OutFile cmake.msi https://github.com/Kitware/CMake/releases/download/v4.5.0/cmake-4.5.0-windows-x86_64.msi
+          Start-Process -NoNewWindow -Wait msiexec "/i cmake.msi /qn"
       - uses: actions/checkout@v6
       - name: Download MSVC
         run: |
@@ -174,6 +184,10 @@ jobs:
   test-vsdownload-windows-arm:
     runs-on: windows-11-arm
     steps:
+      - name: Install prerequisites
+        run: |
+          Invoke-WebRequest -OutFile cmake.msi https://github.com/Kitware/CMake/releases/download/v4.5.0/cmake-4.5.0-windows-arm64.msi
+          Start-Process -NoNewWindow -Wait msiexec "/i cmake.msi /qn"
       - uses: actions/checkout@v6
       - name: Download MSVC
         run: |
@@ -185,6 +199,10 @@ jobs:
   test-vsdownload-windows-arm-target-host-only:
     runs-on: windows-11-arm
     steps:
+      - name: Install prerequisites
+        run: |
+          Invoke-WebRequest -OutFile cmake.msi https://github.com/Kitware/CMake/releases/download/v4.5.0/cmake-4.5.0-windows-arm64.msi
+          Start-Process -NoNewWindow -Wait msiexec "/i cmake.msi /qn"
       - uses: actions/checkout@v6
       - name: Download MSVC
         run: |
